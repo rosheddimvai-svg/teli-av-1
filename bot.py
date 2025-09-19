@@ -12,15 +12,15 @@ from telegram.ext import (
 )
 
 # আপনার বট টোকেন এবং চ্যানেল আইডি
-BOT_TOKEN = "8197222627:AAGjX1XrAqlNnpMYpjSKjA4yOisfeTJbQEk"
-MAIN_CHANNEL_ID = -1002323042564
+BOT_TOKEN = "8245233994:AAHkeQIHd1M3yjJmfiW6iu_vTq5s4o3HovY"
+MAIN_CHANNEL_ID = -1002460901479
 ADMIN_NOTIFY_CHANNEL_ID = -1002787846366
 BROADCAST_CHANNEL_ID = -1003036699455
 
 # অ্যাডমিনের ইউজারনেম, ওয়েবসাইটের লিঙ্ক এবং ভিআইপি গ্রুপের লিঙ্ক
-ADMIN_USERNAME = "rs_rezaul_99"
-HACK_WEBSITE_URL = "https://as-official-channel.netlify.app/"
-VIP_GROUP_LINK = "https://t.me/+WBrUuuuIn2IwMjg1"
+ADMIN_USERNAME = "Soyabur_AS_leaders"
+HACK_WEBSITE_URL = "https://zesty-kelpie-7f5595.netlify.app/"
+VIP_GROUP_LINK = "https://t.me/+Qu4_-3yzjXNiZTk1"
 REFERRAL_LINK = "https://dkwin12.com/#/register?invitationCode=82626111964"
 
 # ConversationHandler এর জন্য স্টেট
@@ -250,3 +250,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
