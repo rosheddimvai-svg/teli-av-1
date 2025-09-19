@@ -1,4 +1,5 @@
 import logging
+import os
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, Bot, WebAppInfo
 from telegram.ext import (
     Application,
@@ -11,14 +12,15 @@ from telegram.ext import (
 )
 
 # আপনার বট টোকেন এবং চ্যানেল আইডি
-BOT_TOKEN = "8245233994:AAHkeQIHd1M3yjJmfiW6iu_vTq5s4o3HovY"
-MAIN_CHANNEL_ID = -1002460901479 # মূল প্রাইভেট চ্যানেল
-ADMIN_NOTIFY_CHANNEL_ID = -1002787846366 # অ্যাডমিন নোটিফিকেশনের জন্য দ্বিতীয় চ্যানেল
+BOT_TOKEN = "8197222627:AAGjX1XrAqlNnpMYpjSKjA4yOisfeTJbQEk"
+MAIN_CHANNEL_ID = -1002323042564
+ADMIN_NOTIFY_CHANNEL_ID = -1002787846366
+BROADCAST_CHANNEL_ID = -1003036699455 # নতুন ব্রডকাস্ট চ্যানেল আইডি
 
 # অ্যাডমিনের ইউজারনেম, ওয়েবসাইটের লিঙ্ক এবং ভিআইপি গ্রুপের লিঙ্ক
 ADMIN_USERNAME = "rs_rezaul_99"
-HACK_WEBSITE_URL = "https://zesty-kelpie-7f5595.netlify.app/"
-VIP_GROUP_LINK = "vip group link"
+HACK_WEBSITE_URL = "https://as-official-channel.netlify.app/"
+VIP_GROUP_LINK = "https://t.me/+WBrUuuuIn2IwMjg1"
 REFERRAL_LINK = "https://dkwin12.com/#/register?invitationCode=82626111964"
 
 # ConversationHandler এর জন্য স্টেট
@@ -28,6 +30,19 @@ AWAITING_UID = 1
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
 )
+
+# ব্যবহারকারীদের আইডি সংরক্ষণের জন্য ফাইল
+USERS_FILE = 'users.txt'
+
+def save_user_id(user_id):
+    """
+    ব্যবহারকারীর আইডি ফাইলে সংরক্ষণ করে।
+    """
+    with open(USERS_FILE, 'a+') as f:
+        f.seek(0)
+        users = f.read().splitlines()
+        if str(user_id) not in users:
+            f.write(f"{user_id}\n")
 
 async def check_member(user_id: int, bot: Bot) -> bool:
     """
@@ -45,6 +60,7 @@ async def start(update: Update, context: CallbackContext) -> None:
     যখন ব্যবহারকারী /start কমান্ড ব্যবহার করবে।
     """
     user = update.effective_user
+    save_user_id(user.id) # এখানে ব্যবহারকারীর আইডি সংরক্ষণ করা হচ্ছে।
     is_member = await check_member(user.id, context.bot)
 
     if not is_member:
@@ -112,13 +128,6 @@ async def receive_uid(update: Update, context: CallbackContext) -> int:
     
     return ConversationHandler.END
 
-async def cancel_uid_submission(update: Update, context: CallbackContext) -> int:
-    """
-    UID সাবমিশন প্রক্রিয়া বাতিল করে।
-    """
-    await update.message.reply_text("ইউআইডি সাবমিশন বাতিল করা হয়েছে।")
-    return ConversationHandler.END
-
 async def handle_admin_action(update: Update, context: CallbackContext) -> None:
     """
     অ্যাডমিন Confirm বা Reject বাটনে ক্লিক করলে এই ফাংশনটি কাজ করবে।
@@ -175,10 +184,38 @@ async def show_tutorials(update: Update, context: CallbackContext) -> None:
     
     await query.message.reply_text("এখানে টিউটোরিয়াল বা শিক্ষামূলক রিসোর্স সম্পর্কিত তথ্য থাকবে।")
 
+async def forward_channel_message(update: Update, context: CallbackContext) -> None:
+    """
+    ব্রডকাস্ট চ্যানেল থেকে আসা বার্তা সকল ব্যবহারকারীর কাছে ফরওয়ার্ড করে।
+    """
+    # নিশ্চিত করা যে বার্তাটি সঠিক চ্যানেল থেকে আসছে।
+    if update.channel_post and update.channel_post.chat.id == BROADCAST_CHANNEL_ID:
+        try:
+            with open(USERS_FILE, 'r') as f:
+                users = f.read().splitlines()
+            
+            # প্রতিটি ব্যবহারকারীর কাছে বার্তা ফরওয়ার্ড করা।
+            for user_id in users:
+                try:
+                    await context.bot.forward_message(
+                        chat_id=int(user_id),
+                        from_chat_id=BROADCAST_CHANNEL_ID,
+                        message_id=update.channel_post.message_id
+                    )
+                except Exception as e:
+                    logging.warning(f"Could not forward message to user {user_id}: {e}")
+            logging.info(f"Broadcast message forwarded to {len(users)} users.")
+        except FileNotFoundError:
+            logging.error(f"{USERS_FILE} not found. No users to forward to.")
+
 def main() -> None:
     """
     বটটি শুরু করার জন্য মূল ফাংশন।
     """
+    # নিশ্চিত করা যে ব্যবহারকারী আইডি সংরক্ষণের জন্য ফাইল আছে।
+    if not os.path.exists(USERS_FILE):
+        open(USERS_FILE, 'w').close()
+
     application = Application.builder().token(BOT_TOKEN).build()
 
     # ConversationHandler তৈরি করা
@@ -197,8 +234,10 @@ def main() -> None:
     application.add_handler(CallbackQueryHandler(show_tutorials, pattern="^show_tutorials$"))
     application.add_handler(CallbackQueryHandler(handle_admin_action, pattern="^(confirm|reject)_"))
 
+    # নতুন ব্রডকাস্ট ফিচার হ্যান্ডলার
+    application.add_handler(MessageHandler(filters.Chat(chat_id=BROADCAST_CHANNEL_ID) & filters.ALL, forward_channel_message))
+
     application.run_polling()
 
 if __name__ == "__main__":
     main()
-
